@@ -1,0 +1,36 @@
+@charset "utf-8";
+/* CSS Document */
+* {
+    padding: 0;
+    border: 0;
+    margin: 0;
+}
+body {
+    width: 1500px;
+    background-image: url(url);
+    background-color: #000000;
+    margin-left: auto;
+    margin-right: auto;
+}
+#box {
+    height: 2485px;
+    width: 1500px;
+    margin-right: auto;
+    margin-left: auto;
+    color: #FFFFFF;
+    text-align: center;
+    font-family: "华文行楷", "华文楷体", "仿宋", "楷体";
+}
+#menu {
+    height: 30px;
+    width: 1000px;
+    padding-top: 14px;
+    padding-bottom: 14px;
+    margin-left: auto;
+    margin-right: auto;
+}
+#top {
+    height: 2427px;
+    width: 1500px;
+    background-image: url(../image/zpml.png);
+}
