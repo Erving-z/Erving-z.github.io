@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TTS</title>
+    <style>
+        T1 {
+            color: rgb(169, 129, 43);
+            font-size: 25px;
+        }
+
+        a {
+            text-decoration: none;
+            color: black;
+            font-size: 20px;
+            line-height: 2em;
+        }
+
+        a:hover {
+            color: #9bc5ac;
+        }
+        .TopT{
+            font-size: 16px;
+        }
+        .TopT:hover {
+            color: black;
+        }
+
+        aa {
+            text-decoration: none;
+            color: black;
+            font-size: 20px;
+            line-height: 2em;
+        }
+
+        .h1_bg {
+            background-color: #9bc5ac;
+            margin-left: 0em;
+        }
+
+        div {
+            margin-left: 7%;
+        }
+    </style>
+</head>
+
+
+
+<body>
+    <a href="PiPi.html" class="TopT" title="返回主页">
+        <h1 class="h1_bg"><img
+            src="images/pig.jpeg"
+            width="80">PiPi.com
+        </h1>
+    </a>
+
+    <div>
+        <T1>文本转语音网站</T1>
+        <br>
+        <a href="https://www.ttson.cn/">TTS Online</a>
+        <a href="https://ttsmaker.cn/">TTSMaker</a>
+        <a href="https://ondoku3.com/zh-hans/">Ondoku</a>
+    </div>
+</body>
+
+</html>
