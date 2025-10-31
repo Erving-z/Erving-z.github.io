@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎹 标准音名的钢琴键盘</title>
+    <style>
+        /* CSS 变量定义，方便调整大小 */
+        :root {
+            --white-key-width: 60px;
+            --black-key-width: 40px;
+            --white-key-height: 200px;
+            --black-key-height: 120px;
+            --padding-size: 20px;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .piano-group {
+            position: relative;
+            padding: var(--padding-size);
+            border-radius: 10px;
+            background-color: #333;
+            /* 宽度计算: 7个白键 + 边框 */
+            width: calc(7 * var(--white-key-width) + 2px); 
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+
+        .white-keys {
+            display: flex;
+        }
+
+        /* --- 通用琴键样式 --- */
+        .key {
+            cursor: pointer;
+            text-align: center;
+            font-family: sans-serif;
+            border-radius: 0 0 5px 5px;
+            transition: background-color 0.1s, transform 0.05s;
+            user-select: none;
+            box-sizing: border-box;
+            position: relative;
+            font-weight: bold;
+            /* 确保音名标签在琴键内居中 */
+            display: flex; 
+            justify-content: center;
+            align-items: flex-end; /* 音名靠底部 */
+        }
+        
+        /* 音名标签的通用样式 */
+        .note-label {
+            /* 默认隐藏音名 */
+            visibility: hidden; 
+            opacity: 0;
+            /* 调整过渡时间，让音名消失时更平滑 */
+            transition: opacity 0.5s ease-out, visibility 0.5s; 
+            line-height: 1; 
+        }
+        
+        /* 用于显示音名的类 */
+        .note-label.visible {
+            visibility: visible;
+            opacity: 1;
+            /* 立即显示，但在隐藏时应用过渡效果 */
+            transition: opacity 0s, visibility 0s; 
+        }
+
+        /* --- 白色琴键样式 --- */
+        .white-key {
+            width: var(--white-key-width);
+            height: var(--white-key-height);
+            background-color: #fff;
+            border: 1px solid #333;
+            z-index: 1; 
+            color: #333;
+            padding-bottom: 10px; /* 底部留出音名空间 */
+        }
+
+        .white-key:active {
+            background-color: #ddd;
+            transform: translateY(1px);
+        }
+
+        /* --- 黑色琴键样式 --- */
+        .black-key {
+            width: var(--black-key-width);
+            height: var(--black-key-height);
+            background-color: #000;
+            border: 1px solid #000;
+            z-index: 2;
+            color: #fff;
+            position: absolute;
+            top: var(--padding-size);
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.7);
+            padding-bottom: 5px; /* 底部留出音名空间 */
+        }
+
+        .black-key:active {
+            background-color: #444;
+            transform: translateY(1px);
+        }
+
+        /* --- 黑键的精确绝对定位 (保持不变) --- */
+        /* 1. C# (位于 C 和 D 之间) */
+        .black-key:nth-child(1) {
+            left: calc(var(--padding-size) + 1 * var(--white-key-width) - var(--black-key-width) / 2);
+        }
+        /* 2. D# (位于 D 和 E 之间) */
+        .black-key:nth-child(2) {
+            left: calc(var(--padding-size) + 2 * var(--white-key-width) - var(--black-key-width) / 2);
+        }
+        /* 3. F# (位于 F 和 G 之间) */
+        .black-key:nth-child(3) {
+            left: calc(var(--padding-size) + 4 * var(--white-key-width) - var(--black-key-width) / 2);
+        }
+        /* 4. G# (位于 G 和 A 之间) */
+        .black-key:nth-child(4) {
+            left: calc(var(--padding-size) + 5 * var(--white-key-width) - var(--black-key-width) / 2);
+        }
+        /* 5. A# (位于 A 和 B 之间) */
+        .black-key:nth-child(5) {
+            left: calc(var(--padding-size) + 6 * var(--white-key-width) - var(--black-key-width) / 2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="piano-group">
+
+        <button id="key-C#4" class="key black-key" onclick="playNote('C#4', this)">
+            <span class="note-label">C#</span>
+        </button>
+        <button id="key-D#4" class="key black-key" onclick="playNote('D#4', this)">
+            <span class="note-label">D#</span>
+        </button>
+        
+        <button id="key-F#4" class="key black-key" onclick="playNote('F#4', this)">
+            <span class="note-label">F#</span>
+        </button>
+        <button id="key-G#4" class="key black-key" onclick="playNote('G#4', this)">
+            <span class="note-label">G#</span>
+        </button>
+        <button id="key-A#4" class="key black-key" onclick="playNote('A#4', this)">
+            <span class="note-label">A#</span>
+        </button>
+        
+        <div class="white-keys">
+            <button id="key-C4" class="key white-key" onclick="playNote('C4', this)">
+                <span class="note-label">C</span>
+            </button>
+            <button id="key-D4" class="key white-key" onclick="playNote('D4', this)">
+                <span class="note-label">D</span>
+            </button>
+            <button id="key-E4" class="key white-key" onclick="playNote('E4', this)">
+                <span class="note-label">E</span>
+            </button>
+            <button id="key-F4" class="key white-key" onclick="playNote('F4', this)">
+                <span class="note-label">F</span>
+            </button>
+            <button id="key-G4" class="key white-key" onclick="playNote('G4', this)">
+                <span class="note-label">G</span>
+            </button>
+            <button id="key-A4" class="key white-key" onclick="playNote('A4', this)">
+                <span class="note-label">A</span>
+            </button>
+            <button id="key-B4" class="key white-key" onclick="playNote('B4', this)">
+                <span class="note-label">B</span>
+            </button>
+        </div>
+        
+    </div>
+
+    <script>
+        // 定义音符名称与其对应的文件名
+        const noteToFileMap = {
+            'C4': 'C4', 'D4': 'D4', 'E4': 'E4', 'F4': 'F4',
+            'G4': 'G4', 'A4': 'A4', 'B4': 'B4',
+            'C#4': 'Db4', 'D#4': 'Eb4', 'F#4': 'Gb4', 
+            'G#4': 'Ab4', 'A#4': 'Bb4'
+        };
+
+        const audioCache = {};
+        // 用于存储每个音符的自动隐藏定时器 ID
+        const timeoutCache = {}; 
+        const HIDE_DELAY_MS = 2000; // 2秒
+
+        function playNote(note, keyElement) {
+            console.log("您点击了音符: " + note);
+            
+            const label = keyElement.querySelector('.note-label');
+            
+            if (label) {
+                // 1. **清除旧定时器 (重要!)**
+                // 如果当前音符正在等待隐藏，我们先取消它，以防快速重复点击导致立即消失
+                if (timeoutCache[note]) {
+                    clearTimeout(timeoutCache[note]);
+                }
+
+                // 2. **显示音名**
+                label.classList.add('visible');
+                
+                // 3. **设置新的定时器，2秒后移除 'visible' 类**
+                const timeoutId = setTimeout(() => {
+                    label.classList.remove('visible');
+                    // 清理缓存中的定时器 ID
+                    delete timeoutCache[note]; 
+                }, HIDE_DELAY_MS);
+
+                // 4. **保存新的定时器 ID**
+                timeoutCache[note] = timeoutId;
+            }
+
+            // --- 播放音频逻辑 (保持不变) ---
+            const fileNameBase = noteToFileMap[note];
+            if (!fileNameBase) {
+                console.error("找不到音符 " + note + " 对应的文件名配置！");
+                return;
+            }
+
+            const filePath = `sound/${fileNameBase}.mp3`;
+
+            if (!audioCache[note]) {
+                audioCache[note] = new Audio(filePath);
+                audioCache[note].load(); 
+            }
+
+            const audio = audioCache[note];
+            audio.pause();
+            audio.currentTime = 0; 
+            
+            audio.play().catch(error => {
+                console.error("音频播放失败: ", error);
+            });
+        }
+    </script>
+
+</body>
+</html>
