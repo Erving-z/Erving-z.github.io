@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Gemini 高级聊天测试 (带上下文)</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 600px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            background-color: #f4f4f9; 
+        }
+        /* 统一样式，用于两个设置区域 */
+        .settings-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        #status-message {
+            text-align: center;
+            margin-bottom: 10px;
+            height: 1.2em; /* 占位，防止页面跳动 */
+            font-style: italic;
+            color: #666;
+        }
+        #chat-container { 
+            border: 1px solid #ccc; 
+            padding: 15px; 
+            background-color: white; 
+            border-radius: 8px; 
+            min-height: 300px; 
+            max-height: 500px; 
+            overflow-y: auto; 
+            margin-bottom: 15px; 
+        }
+        .message { 
+            margin-bottom: 10px; 
+            padding: 8px; 
+            border-radius: 5px; 
+            word-wrap: break-word; 
+        }
+        .user { 
+            text-align: right; 
+            background-color: #dcf8c6; 
+            margin-left: 25%;
+        }
+        .ai { 
+            text-align: left; 
+            background-color: #eceff1; 
+            margin-right: 25%;
+        }
+        .error { 
+            text-align: left;
+            background-color: #fbebee;
+            color: #c00;
+            border: 1px solid #ea9999;
+            margin-right: 25%;
+        }
+        #input-area { display: flex; }
+        #user-input { flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; }
+        #send-button { 
+            padding: 10px 15px; 
+            background-color: #007bff; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            border-radius: 0 4px 4px 0; 
+        }
+        #send-button:disabled { background-color: #cccccc; }
+    </style>
+</head>
+<body>
+
+    <h2>Gemini 高级聊天测试</h2>
+    
+    <div id="model-settings" class="settings-box">
+        <label for="model-select">选择模型：</label>
+        <select id="model-select">
+            <optgroup label="快速模型 (Fast Models)">
+                <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (最新最快)</option>
+                <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite (极速)</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash (旧版)</option>
+            </optgroup>
+            <optgroup label="思考/推理模型 (Reasoning Models)">
+                <option value="gemini-2.5-pro">Gemini 2.5 Pro (最强)</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro (旧版-长上下文)</option>
+            </optgroup>
+        </select>
+    </div>
+
+    <div id="context-settings" class="settings-box">
+        <label for="context-select">上下文数量：</label>
+        <select id="context-select">
+            <option value="1" selected>1 (无上下文 - 默认)</option>
+            <option value="5">5 条历史</option>
+            <option value="10">10 条历史</option>
+            <option value="25">25 条历史</option>
+            <option value="Infinity">无限 (保留所有)</option>
+        </select>
+    </div>
+
+    <div id="status-message"></div>
+
+    <div id="chat-container">
+        <div class="message ai">你好！请选择模型和上下文数量，然后开始聊天。</div>
+    </div>
+
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="输入您的问题..." onkeypress="if(event.key === 'Enter') sendMessage()">
+        <button id="send-button" onclick="sendMessage()">发送</button>
+    </div>
+
+    <script>
+        const API_KEY = "AIzaSyB9U5pSTEhM5R5sxmAHlSXe-CHCXmgqLro"; // *** 请替换成您的 Key ***
+        
+        // 获取所有 DOM 元素
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const modelSelect = document.getElementById('model-select'); 
+        const contextSelect = document.getElementById('context-select'); // 新增
+        const statusMessage = document.getElementById('status-message');
+        
+        // --- 核心改动：用于存储对话历史 ---
+        // 数组中将存储 { role: 'user' | 'model', parts: [{ text: '...' }] }
+        let chatHistory = []; 
+        
+        let thinkingTimer = null; 
+
+        /**
+         * 在聊天容器中显示消息
+         * @param {string} text - 消息内容
+         * @param {string} sender - 'user', 'ai', 或 'error'
+         */
+        function displayMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender === 'error' ? 'ai error' : sender}`;
+            messageDiv.textContent = text;
+            chatContainer.appendChild(messageDiv); 
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        /**
+         * 停止计时器并清除状态消息
+         */
+        function stopThinkingTimer() {
+            clearInterval(thinkingTimer);
+            thinkingTimer = null;
+            statusMessage.textContent = '';
+        }
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (!message) return;
+            
+            const selectedModel = modelSelect.value; 
+            const contextLength = contextSelect.value; // 获取上下文设置
+
+            // 1. 禁用输入
+            userInput.value = '';
+            sendButton.disabled = true;
+            userInput.disabled = true;
+            modelSelect.disabled = true;
+            contextSelect.disabled = true; // 禁用上下文选择
+
+            stopThinkingTimer(); 
+
+            // 2. 显示用户消息
+            displayMessage(message, 'user');
+
+            // 3. --- 核心改动：管理历史记录 ---
+            // 将用户的当前消息添加到历史记录中
+            const userMessageObject = { role: "user", parts: [{ text: message }] };
+            chatHistory.push(userMessageObject);
+
+            // 根据选择的上下文长度，准备要发送的内容
+            let contentsToSend = [];
+            if (contextLength === "Infinity") {
+                contentsToSend = chatHistory; // 发送所有历史
+            } else {
+                const length = parseInt(contextLength);
+                // 使用 .slice(-N) 获取数组的最后 N 个元素
+                // (如果 N=1, 则只发送当前用户消息，即无上下文)
+                contentsToSend = chatHistory.slice(-length);
+            }
+            
+            // 4. 启动“思考”计时器
+            if (selectedModel.includes('pro')) {
+                let startTime = Date.now();
+                statusMessage.textContent = '🤖 正在思考... 0.0s';
+                thinkingTimer = setInterval(() => {
+                    const seconds = ((Date.now() - startTime) / 1000).toFixed(1);
+                    statusMessage.textContent = `🤖 正在思考... ${seconds}s`;
+                }, 100);
+            } else {
+                statusMessage.textContent = '⚡ 快速请求中...'; 
+            }
+
+            try {
+                // 5. 构建 API 请求
+                const apiUrl = `https://generativelanguage.googleapis.com/v1/models/${selectedModel}:generateContent?key=${API_KEY}`;
+                
+                const requestBody = {
+                    contents: contentsToSend, // *** 使用截取后的历史记录 ***
+                    generationConfig: { 
+                        temperature: 0.7 
+                    }
+                };
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', },
+                    body: JSON.stringify(requestBody),
+                });
+
+                stopThinkingTimer();
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    const errorMessage = errorData.error?.message || `API 请求失败: ${response.status}`;
+                    throw new Error(errorMessage);
+                }
+
+                const data = await response.json();
+
+                // 6. 解析 AI 的回复
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "[AI 返回了空回复]";
+                
+                // 7. 显示 AI 消息
+                displayMessage(aiText, 'ai');
+
+                // 8. --- 核心改动：将 AI 回复添加到历史 ---
+                const aiMessageObject = { role: "model", parts: [{ text: aiText }] };
+                chatHistory.push(aiMessageObject);
+
+            } catch (error) {
+                console.error("聊天请求出错:", error);
+                
+                stopThinkingTimer(); 
+                
+                // 显示错误消息
+                displayMessage(`[错误] 模型调用失败: ${error.message}`, 'error');
+
+                // 9. --- 核心改动：如果失败，移除刚才添加的 user 消息 ---
+                chatHistory.pop(); 
+            } finally {
+                // 10. 重新启用输入
+                sendButton.disabled = false;
+                userInput.disabled = false;
+                modelSelect.disabled = false;
+                contextSelect.disabled = false; // 启用上下文选择
+                userInput.focus();
+            }
+        }
+    </script>
+
+</body>
+</html>
